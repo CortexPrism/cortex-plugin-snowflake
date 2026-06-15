@@ -31,7 +31,10 @@
           "description": "Target warehouse",
           "required": false,
           "defaultValue": "snowflake",
-          "options": ["snowflake", "bigquery"]
+          "options": [
+            "snowflake",
+            "bigquery"
+          ]
         },
         {
           "name": "max_rows",
@@ -52,7 +55,10 @@
           "description": "Target warehouse",
           "required": false,
           "defaultValue": "snowflake",
-          "options": ["snowflake", "bigquery"]
+          "options": [
+            "snowflake",
+            "bigquery"
+          ]
         },
         {
           "name": "schema",
@@ -78,7 +84,10 @@
           "description": "Target warehouse",
           "required": false,
           "defaultValue": "snowflake",
-          "options": ["snowflake", "bigquery"]
+          "options": [
+            "snowflake",
+            "bigquery"
+          ]
         }
       ]
     },
@@ -98,7 +107,10 @@
           "description": "Target warehouse",
           "required": false,
           "defaultValue": "snowflake",
-          "options": ["snowflake", "bigquery"]
+          "options": [
+            "snowflake",
+            "bigquery"
+          ]
         }
       ]
     },
@@ -124,7 +136,13 @@
           "description": "Chart visualization type",
           "required": false,
           "defaultValue": "table",
-          "options": ["bar", "line", "pie", "table", "area"]
+          "options": [
+            "bar",
+            "line",
+            "pie",
+            "table",
+            "area"
+          ]
         },
         {
           "name": "warehouse",
@@ -132,71 +150,78 @@
           "description": "Target warehouse",
           "required": false,
           "defaultValue": "snowflake",
-          "options": ["snowflake", "bigquery"]
+          "options": [
+            "snowflake",
+            "bigquery"
+          ]
         }
       ]
     }
   ],
-  "ui": [
-    {
-      "section": "Snowflake",
-      "fields": [
-        {
-          "key": "snowflakeAccount",
-          "label": "Account",
-          "type": "text",
-          "description": "Snowflake account identifier"
-        },
-        {
-          "key": "snowflakeUser",
-          "label": "User",
-          "type": "text",
-          "description": "Snowflake username"
-        },
-        {
-          "key": "snowflakePassword",
-          "label": "Password",
-          "type": "secret",
-          "description": "Snowflake password"
-        },
-        {
-          "key": "snowflakeWarehouse",
-          "label": "Warehouse",
-          "type": "text",
-          "description": "Snowflake warehouse name"
-        },
-        {
-          "key": "snowflakeDatabase",
-          "label": "Database",
-          "type": "text",
-          "description": "Snowflake database name"
-        }
-      ]
-    },
-    {
-      "section": "BigQuery",
-      "fields": [
-        {
-          "key": "bigqueryProjectId",
-          "label": "Project ID",
-          "type": "text",
-          "description": "GCP project ID"
-        },
-        {
-          "key": "bigqueryCredentials",
-          "label": "Service Account JSON",
-          "type": "secret",
-          "description": "GCP service account JSON key content"
-        }
-      ]
-    }
-  ],
+  "ui": {
+    "settings": [
+      {
+        "section": "Snowflake",
+        "fields": [
+          {
+            "key": "snowflakeAccount",
+            "label": "Account",
+            "type": "text",
+            "description": "Snowflake account identifier"
+          },
+          {
+            "key": "snowflakeUser",
+            "label": "User",
+            "type": "text",
+            "description": "Snowflake username"
+          },
+          {
+            "key": "snowflakePassword",
+            "label": "Password",
+            "type": "secret",
+            "description": "Snowflake password"
+          },
+          {
+            "key": "snowflakeWarehouse",
+            "label": "Warehouse",
+            "type": "text",
+            "description": "Snowflake warehouse name"
+          },
+          {
+            "key": "snowflakeDatabase",
+            "label": "Database",
+            "type": "text",
+            "description": "Snowflake database name"
+          }
+        ]
+      },
+      {
+        "section": "BigQuery",
+        "fields": [
+          {
+            "key": "bigqueryProjectId",
+            "label": "Project ID",
+            "type": "text",
+            "description": "GCP project ID"
+          },
+          {
+            "key": "bigqueryCredentials",
+            "label": "Service Account JSON",
+            "type": "secret",
+            "description": "GCP service account JSON key content"
+          }
+        ]
+      }
+    ]
+  },
   "dependencies": {},
   "peerDependencies": {
     "cortex": ">=1.0.0"
   },
   "aiDisclosure": {
-    "tools": ["Claude Code (Anthropic)"],
+    "tools": [
+      "Claude Code (Anthropic)"
+    ],
     "humanReview": true
   }
 }

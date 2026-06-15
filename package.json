@@ -1,5 +1,5 @@
 {
-  "name": "cortex-plugin-example",
+  "name": "cortex-plugin-snowflake",
   "version": "1.0.0",
   "description": "Example Cortex plugin template",
   "type": "module",
@@ -17,11 +17,11 @@
     "cortex-plugin",
     "esm"
   ],
-  "author": "Your Name",
+  "author": "CortexPrism",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CortexPrism/cortex-plugin-example.git"
+    "url": "https://github.com/CortexPrism/cortex-plugin-snowflake.git"
   },
   "dependencies": {
     "@cortexprism/plugin-sdk": "^1.0.0"
