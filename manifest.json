@@ -1,0 +1,202 @@
+{
+  "name": "cortex-plugin-snowflake",
+  "version": "1.0.0",
+  "description": "Connect to cloud data warehouses (Snowflake, BigQuery) and run analytical queries",
+  "kind": "esm",
+  "entryPoint": "mod.ts",
+  "runtime": "deno",
+  "author": "CortexPrism",
+  "license": "MIT",
+  "repository": "https://github.com/CortexPrism/cortex-plugin-snowflake",
+  "homepage": "",
+  "capabilities": [
+    "tools",
+    "network:fetch",
+    "db:read"
+  ],
+  "tools": [
+    {
+      "name": "warehouse_query",
+      "description": "Run an analytical query against a cloud data warehouse",
+      "params": [
+        {
+          "name": "query",
+          "type": "string",
+          "description": "SQL query to execute",
+          "required": true
+        },
+        {
+          "name": "warehouse",
+          "type": "string",
+          "description": "Target warehouse",
+          "required": false,
+          "defaultValue": "snowflake",
+          "options": ["snowflake", "bigquery"]
+        },
+        {
+          "name": "max_rows",
+          "type": "number",
+          "description": "Maximum rows to return",
+          "required": false,
+          "defaultValue": 1000
+        }
+      ]
+    },
+    {
+      "name": "warehouse_list_tables",
+      "description": "List tables or datasets in the warehouse",
+      "params": [
+        {
+          "name": "warehouse",
+          "type": "string",
+          "description": "Target warehouse",
+          "required": false,
+          "defaultValue": "snowflake",
+          "options": ["snowflake", "bigquery"]
+        },
+        {
+          "name": "schema",
+          "type": "string",
+          "description": "Schema or dataset name to filter by",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "warehouse_describe",
+      "description": "Describe the schema of a specific table",
+      "params": [
+        {
+          "name": "table_name",
+          "type": "string",
+          "description": "Fully-qualified table name",
+          "required": true
+        },
+        {
+          "name": "warehouse",
+          "type": "string",
+          "description": "Target warehouse",
+          "required": false,
+          "defaultValue": "snowflake",
+          "options": ["snowflake", "bigquery"]
+        }
+      ]
+    },
+    {
+      "name": "warehouse_explain",
+      "description": "Get the query execution plan for analysis",
+      "params": [
+        {
+          "name": "query",
+          "type": "string",
+          "description": "SQL query to explain",
+          "required": true
+        },
+        {
+          "name": "warehouse",
+          "type": "string",
+          "description": "Target warehouse",
+          "required": false,
+          "defaultValue": "snowflake",
+          "options": ["snowflake", "bigquery"]
+        }
+      ]
+    },
+    {
+      "name": "warehouse_generate_report",
+      "description": "Generate a report with chart from a query",
+      "params": [
+        {
+          "name": "query",
+          "type": "string",
+          "description": "SQL query for the report data",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Report title",
+          "required": true
+        },
+        {
+          "name": "chart_type",
+          "type": "string",
+          "description": "Chart visualization type",
+          "required": false,
+          "defaultValue": "table",
+          "options": ["bar", "line", "pie", "table", "area"]
+        },
+        {
+          "name": "warehouse",
+          "type": "string",
+          "description": "Target warehouse",
+          "required": false,
+          "defaultValue": "snowflake",
+          "options": ["snowflake", "bigquery"]
+        }
+      ]
+    }
+  ],
+  "ui": [
+    {
+      "section": "Snowflake",
+      "fields": [
+        {
+          "key": "snowflakeAccount",
+          "label": "Account",
+          "type": "text",
+          "description": "Snowflake account identifier"
+        },
+        {
+          "key": "snowflakeUser",
+          "label": "User",
+          "type": "text",
+          "description": "Snowflake username"
+        },
+        {
+          "key": "snowflakePassword",
+          "label": "Password",
+          "type": "secret",
+          "description": "Snowflake password"
+        },
+        {
+          "key": "snowflakeWarehouse",
+          "label": "Warehouse",
+          "type": "text",
+          "description": "Snowflake warehouse name"
+        },
+        {
+          "key": "snowflakeDatabase",
+          "label": "Database",
+          "type": "text",
+          "description": "Snowflake database name"
+        }
+      ]
+    },
+    {
+      "section": "BigQuery",
+      "fields": [
+        {
+          "key": "bigqueryProjectId",
+          "label": "Project ID",
+          "type": "text",
+          "description": "GCP project ID"
+        },
+        {
+          "key": "bigqueryCredentials",
+          "label": "Service Account JSON",
+          "type": "secret",
+          "description": "GCP service account JSON key content"
+        }
+      ]
+    }
+  ],
+  "dependencies": {},
+  "peerDependencies": {
+    "cortex": ">=1.0.0"
+  },
+  "aiDisclosure": {
+    "tools": ["Claude Code (Anthropic)"],
+    "humanReview": true
+  }
+}
