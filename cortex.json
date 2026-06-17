@@ -1,6 +1,6 @@
 {
   "name": "cortex-plugin-snowflake",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connect to cloud data warehouses (Snowflake, BigQuery) and run analytical queries",
   "kind": "esm",
   "entryPoint": "mod.ts",

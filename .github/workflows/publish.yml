@@ -9,25 +9,25 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      
+
       - name: Run tests
         run: deno task test
-      
+
       - name: Lint code
         run: deno task lint
-      
+
       - name: Format check
         run: deno task fmt:check
-      
+
       - name: Validate manifest
         run: deno task validate
 
@@ -35,15 +35,15 @@ jobs:
     name: Publish Plugin
     needs: test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Verify version matches manifest
         run: |
           MANIFEST_VERSION=$(jq -r '.version' manifest.json)
@@ -51,16 +51,16 @@ jobs:
             echo "Version mismatch: tag is ${{ steps.version.outputs.VERSION }}, manifest is $MANIFEST_VERSION"
             exit 1
           fi
-      
+
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      
+
       - name: Build plugin
         run: |
           deno compile --allow-all --output plugin-build mod.ts
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -73,7 +73,7 @@ jobs:
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Notify Marketplace (Optional)
         if: success()
         run: |

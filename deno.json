@@ -9,7 +9,6 @@
     "validate": "deno check mod.ts && deno fmt --check && deno lint"
   },
   "imports": {
-    "cortex/plugins": "https://deno.land/x/cortex@latest/plugins/mod.ts",
     "@std/": "https://deno.land/std@0.208.0/"
   },
   "fmt": {
