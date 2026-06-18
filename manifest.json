@@ -1,6 +1,6 @@
 {
   "name": "cortex-plugin-snowflake",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Connect to cloud data warehouses (Snowflake, BigQuery) and run analytical queries",
   "kind": "esm",
   "entryPoint": "mod.ts",
@@ -8,7 +8,7 @@
   "author": "CortexPrism",
   "license": "MIT",
   "repository": "https://github.com/CortexPrism/cortex-plugin-snowflake",
-  "homepage": "",
+  "homepage": "https://github.com/CortexPrism/cortex-plugin-snowflake",
   "capabilities": [
     "tools",
     "network:fetch",
@@ -30,8 +30,8 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "defaultValue": "snowflake",
-          "options": [
+          "default": "snowflake",
+          "enum": [
             "snowflake",
             "bigquery"
           ]
@@ -41,7 +41,7 @@
           "type": "number",
           "description": "Maximum rows to return",
           "required": false,
-          "defaultValue": 1000
+          "default": 1000
         }
       ]
     },
@@ -54,8 +54,8 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "defaultValue": "snowflake",
-          "options": [
+          "default": "snowflake",
+          "enum": [
             "snowflake",
             "bigquery"
           ]
@@ -83,8 +83,8 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "defaultValue": "snowflake",
-          "options": [
+          "default": "snowflake",
+          "enum": [
             "snowflake",
             "bigquery"
           ]
@@ -106,8 +106,8 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "defaultValue": "snowflake",
-          "options": [
+          "default": "snowflake",
+          "enum": [
             "snowflake",
             "bigquery"
           ]
@@ -135,8 +135,8 @@
           "type": "string",
           "description": "Chart visualization type",
           "required": false,
-          "defaultValue": "table",
-          "options": [
+          "default": "table",
+          "enum": [
             "bar",
             "line",
             "pie",
@@ -149,8 +149,8 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "defaultValue": "snowflake",
-          "options": [
+          "default": "snowflake",
+          "enum": [
             "snowflake",
             "bigquery"
           ]

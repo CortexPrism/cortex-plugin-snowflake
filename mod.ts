@@ -6,11 +6,14 @@ async function resolveConfig(ctx: PluginContext): Promise<Record<string, string>
   const keys = [
     'snowflakeAccount',
     'snowflakeUser',
-    'snowflakePassword',
+    'snowflakePrivateKey',
+    'snowflakeOauthToken',
     'snowflakeWarehouse',
     'snowflakeDatabase',
     'bigqueryProjectId',
-    'bigqueryCredentials',
+    'bigqueryClientEmail',
+    'bigqueryPrivateKey',
+    'bigqueryTokenUri',
   ];
   const cfg: Record<string, string> = {};
   for (const k of keys) {
@@ -19,7 +22,125 @@ async function resolveConfig(ctx: PluginContext): Promise<Record<string, string>
   return cfg;
 }
 
+/**
+ * Generate a Snowflake Key Pair JWT for authentication.
+ * Uses RS256 signing with the configured private key (PEM format).
+ */
+async function generateSnowflakeJWT(account: string, user: string, privateKeyPem: string): Promise<string> {
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: `${account.toUpperCase()}.${user.toUpperCase()}.SHA256:${await computePublicKeyFingerprint(privateKeyPem)}`,
+    sub: `${account.toUpperCase()}.${user.toUpperCase()}`,
+    iat: now,
+    exp: now + 3600, // 1 hour expiry
+  };
+
+  const headerB64 = btoa(JSON.stringify(header));
+  const payloadB64 = btoa(JSON.stringify(payload));
+  const signingInput = `${headerB64}.${payloadB64}`;
+
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(privateKeyPem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signingInput));
+  const signatureB64 = arrayBufferToBase64(signature);
+
+  return `${signingInput}.${signatureB64}`;
+}
+
+/**
+ * Generate a Google Cloud OAuth2 access token using a service account.
+ */
+async function generateBigQueryAccessToken(
+  clientEmail: string,
+  privateKeyPem: string,
+  tokenUri: string,
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const jwtPayload = {
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/bigquery',
+    aud: tokenUri || 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const headerB64 = btoa(JSON.stringify(header));
+  const payloadB64 = btoa(JSON.stringify(jwtPayload));
+  const signingInput = `${headerB64}.${payloadB64}`;
+
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(privateKeyPem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signingInput));
+  const assertion = `${signingInput}.${arrayBufferToBase64(signature)}`;
+
+  const tokenRes = await fetch(tokenUri || 'https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }),
+  });
+
+  if (!tokenRes.ok) {
+    const text = await tokenRes.text();
+    throw new Error(`OAuth2 token request failed (${tokenRes.status}): ${text}`);
+  }
+
+  const tokenData = await tokenRes.json() as { access_token: string };
+  return tokenData.access_token;
+}
+
+// PEM helpers
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  const b64 = pem
+    .replace(/-----BEGIN [\w\s]+-----/, '')
+    .replace(/-----END [\w\s]+-----/, '')
+    .replace(/\s/g, '');
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+async function computePublicKeyFingerprint(privateKeyPem: string): Promise<string> {
+  // Extract public key from private key and compute SHA-256 fingerprint
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(privateKeyPem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    true,
+    ['sign'],
+  );
+  const jwk = await crypto.subtle.exportKey('jwk', key);
+  const pubKeyPem = `-----BEGIN PUBLIC KEY-----\n${jwk.n}\n-----END PUBLIC KEY-----`;
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pubKeyPem));
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(':');
+}
+
 export async function onLoad(ctx: PluginContext): Promise<void> {
+  ctx.logger.info(`[cortex-plugin-snowflake] Loaded`);
   config = await resolveConfig(ctx);
 }
 
@@ -30,12 +151,18 @@ function getWarehouse(warehouse?: unknown): string {
 
 function warehouseConfigured(w: string): string | null {
   if (w === 'snowflake') {
-    if (!config.snowflakeAccount || !config.snowflakeUser || !config.snowflakePassword) {
-      return 'Snowflake credentials not configured (account, user, password)';
+    if (!config.snowflakeAccount || !config.snowflakeUser) {
+      return 'Snowflake credentials not configured (account, user)';
+    }
+    if (!config.snowflakePrivateKey && !config.snowflakeOauthToken) {
+      return 'Snowflake auth not configured (set either snowflakePrivateKey for key-pair auth or snowflakeOauthToken for OAuth)';
     }
   } else {
-    if (!config.bigqueryProjectId || !config.bigqueryCredentials) {
-      return 'BigQuery credentials not configured (projectId, credentials)';
+    if (!config.bigqueryProjectId) {
+      return 'BigQuery project ID not configured';
+    }
+    if (!config.bigqueryClientEmail || !config.bigqueryPrivateKey) {
+      return 'BigQuery service account not configured (clientEmail, privateKey)';
     }
   }
   return null;
@@ -48,7 +175,20 @@ async function executeQuery(
 ): Promise<{ ok: boolean; data: unknown; error?: string }> {
   const err = warehouseConfigured(w);
   if (err) return { ok: false, data: null, error: err };
+
   if (w === 'snowflake') {
+    // Authenticate via Key Pair JWT or OAuth token
+    let token: string;
+    try {
+      if (config.snowflakePrivateKey) {
+        token = await generateSnowflakeJWT(config.snowflakeAccount, config.snowflakeUser, config.snowflakePrivateKey);
+      } else {
+        token = config.snowflakeOauthToken;
+      }
+    } catch (e) {
+      return { ok: false, data: null, error: `Snowflake auth failed: ${e instanceof Error ? e.message : String(e)}` };
+    }
+
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -57,15 +197,15 @@ async function executeQuery(
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${config.snowflakePassword}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'User-Agent': 'CortexPrism-SnowflakePlugin/1.0.0',
             'X-Snowflake-Authorization-Token-Type': 'KEYPAIR_JWT',
           },
           body: JSON.stringify({
             statement: query,
-            warehouse: config.snowflakeWarehouse,
-            database: config.snowflakeDatabase,
+            warehouse: config.snowflakeWarehouse || undefined,
+            database: config.snowflakeDatabase || undefined,
           }),
           signal: controller.signal,
         },
@@ -85,12 +225,19 @@ async function executeQuery(
       return { ok: false, data: null, error: e instanceof Error ? e.message : String(e) };
     }
   } else {
-    let creds: Record<string, unknown>;
+    // BigQuery: use OAuth2 service account authentication
+    let token: string;
     try {
-      creds = JSON.parse(config.bigqueryCredentials);
-    } catch {
-      return { ok: false, data: null, error: 'BigQuery credentials must be valid JSON' };
+      const tokenUri = config.bigqueryTokenUri || 'https://oauth2.googleapis.com/token';
+      token = await generateBigQueryAccessToken(
+        config.bigqueryClientEmail,
+        config.bigqueryPrivateKey,
+        tokenUri,
+      );
+    } catch (e) {
+      return { ok: false, data: null, error: `BigQuery auth failed: ${e instanceof Error ? e.message : String(e)}` };
     }
+
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -99,7 +246,7 @@ async function executeQuery(
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${creds.private_key || ''}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'User-Agent': 'CortexPrism-SnowflakePlugin/1.0.0',
           },
