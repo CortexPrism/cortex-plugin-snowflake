@@ -26,11 +26,17 @@ async function resolveConfig(ctx: PluginContext): Promise<Record<string, string>
  * Generate a Snowflake Key Pair JWT for authentication.
  * Uses RS256 signing with the configured private key (PEM format).
  */
-async function generateSnowflakeJWT(account: string, user: string, privateKeyPem: string): Promise<string> {
+async function generateSnowflakeJWT(
+  account: string,
+  user: string,
+  privateKeyPem: string,
+): Promise<string> {
   const header = { alg: 'RS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
   const payload = {
-    iss: `${account.toUpperCase()}.${user.toUpperCase()}.SHA256:${await computePublicKeyFingerprint(privateKeyPem)}`,
+    iss: `${account.toUpperCase()}.${user.toUpperCase()}.SHA256:${await computePublicKeyFingerprint(
+      privateKeyPem,
+    )}`,
     sub: `${account.toUpperCase()}.${user.toUpperCase()}`,
     iat: now,
     exp: now + 3600, // 1 hour expiry
@@ -48,7 +54,11 @@ async function generateSnowflakeJWT(account: string, user: string, privateKeyPem
     ['sign'],
   );
 
-  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signingInput));
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    new TextEncoder().encode(signingInput),
+  );
   const signatureB64 = arrayBufferToBase64(signature);
 
   return `${signingInput}.${signatureB64}`;
@@ -84,7 +94,11 @@ async function generateBigQueryAccessToken(
     ['sign'],
   );
 
-  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signingInput));
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    new TextEncoder().encode(signingInput),
+  );
   const assertion = `${signingInput}.${arrayBufferToBase64(signature)}`;
 
   const tokenRes = await fetch(tokenUri || 'https://oauth2.googleapis.com/token', {
@@ -136,7 +150,7 @@ async function computePublicKeyFingerprint(privateKeyPem: string): Promise<strin
   const jwk = await crypto.subtle.exportKey('jwk', key);
   const pubKeyPem = `-----BEGIN PUBLIC KEY-----\n${jwk.n}\n-----END PUBLIC KEY-----`;
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pubKeyPem));
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(':');
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join(':');
 }
 
 export async function onLoad(ctx: PluginContext): Promise<void> {
@@ -181,12 +195,20 @@ async function executeQuery(
     let token: string;
     try {
       if (config.snowflakePrivateKey) {
-        token = await generateSnowflakeJWT(config.snowflakeAccount, config.snowflakeUser, config.snowflakePrivateKey);
+        token = await generateSnowflakeJWT(
+          config.snowflakeAccount,
+          config.snowflakeUser,
+          config.snowflakePrivateKey,
+        );
       } else {
         token = config.snowflakeOauthToken;
       }
     } catch (e) {
-      return { ok: false, data: null, error: `Snowflake auth failed: ${e instanceof Error ? e.message : String(e)}` };
+      return {
+        ok: false,
+        data: null,
+        error: `Snowflake auth failed: ${e instanceof Error ? e.message : String(e)}`,
+      };
     }
 
     const controller = new AbortController();
@@ -235,7 +257,11 @@ async function executeQuery(
         tokenUri,
       );
     } catch (e) {
-      return { ok: false, data: null, error: `BigQuery auth failed: ${e instanceof Error ? e.message : String(e)}` };
+      return {
+        ok: false,
+        data: null,
+        error: `BigQuery auth failed: ${e instanceof Error ? e.message : String(e)}`,
+      };
     }
 
     const controller = new AbortController();
