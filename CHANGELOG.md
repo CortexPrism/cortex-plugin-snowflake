@@ -1,5 +1,16 @@
 # Changelog
 
+
+## [1.1.1] — 2026-06-22
+
+### Changed
+
+- Migrated to CortexPrism v0.51.0 plugin API
+- Renamed `ToolResult` → `ToolCallResult` to match SDK types
+- Switched type imports from local `types.ts` to `cortex/plugins` module
+- Updated `peerDependencies.cortex` to `>=0.51.0`
+- Standardized UI settings: `default` → `defaultValue`, `enum` → `options` for select fields
+- All code passes `deno fmt` and `deno lint`
 ## [Unreleased]
 
 ### Added

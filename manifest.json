@@ -1,6 +1,6 @@
 {
   "name": "cortex-plugin-snowflake",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Connect to cloud data warehouses (Snowflake, BigQuery) and run analytical queries",
   "kind": "esm",
   "entryPoint": "mod.ts",
@@ -30,7 +30,7 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "default": "snowflake",
+          "defaultValue": "snowflake",
           "enum": [
             "snowflake",
             "bigquery"
@@ -41,7 +41,7 @@
           "type": "number",
           "description": "Maximum rows to return",
           "required": false,
-          "default": 1000
+          "defaultValue": 1000
         }
       ]
     },
@@ -54,7 +54,7 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "default": "snowflake",
+          "defaultValue": "snowflake",
           "enum": [
             "snowflake",
             "bigquery"
@@ -83,7 +83,7 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "default": "snowflake",
+          "defaultValue": "snowflake",
           "enum": [
             "snowflake",
             "bigquery"
@@ -106,7 +106,7 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "default": "snowflake",
+          "defaultValue": "snowflake",
           "enum": [
             "snowflake",
             "bigquery"
@@ -135,7 +135,7 @@
           "type": "string",
           "description": "Chart visualization type",
           "required": false,
-          "default": "table",
+          "defaultValue": "table",
           "enum": [
             "bar",
             "line",
@@ -149,7 +149,7 @@
           "type": "string",
           "description": "Target warehouse",
           "required": false,
-          "default": "snowflake",
+          "defaultValue": "snowflake",
           "enum": [
             "snowflake",
             "bigquery"
@@ -216,7 +216,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "cortex": ">=1.0.0"
+    "cortex": ">=0.51.0"
   },
   "aiDisclosure": {
     "tools": [
